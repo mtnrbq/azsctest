@@ -1,0 +1,23 @@
+on: 
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Azure Sphere Apps
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Build image for azsphere builds and Start container from build image
+      run: |
+        docker build --target release-build -t relbuildimage -f .devcontainer/Dockerfile .
+        docker run --name relbuildcontainer relbuildimage
+    - name: Copy container build output
+      run:
+        docker cp relbuildcontainer:/src/out/build/Release-Linux RelOutput
+    - name: Publish release imagepackage
+      uses: actions/upload-artifact@v2
+      with:
+        name: Release imagepackage
+        path: ${{ github.workspace }}/RelOutput/AzureSphereBlink.imagepackage
